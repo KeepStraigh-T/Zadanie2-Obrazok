@@ -26,6 +26,8 @@ GSI* gsi_create_with_geometry(unsigned int m, unsigned int n);
 GSI* gsi_create_with_geometry_and_color(unsigned int m, unsigned int n, unsigned char color);
 GSI* gsi_create_by_pgm5(char *file_name);
 char gsi_save_as_pgm5(GSI *img, char *file_name, char *comment);
+void gsi_destroy(GSI *img);
+
 
 
 #endif

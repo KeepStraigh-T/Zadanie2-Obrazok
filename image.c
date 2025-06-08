@@ -203,3 +203,9 @@ char gsi_save_as_pgm5(GSI *img, char *file_name, char *comment)
 	close(file_desc);
 	return SAVE_OK;
 }
+
+void gsi_destroy(GSI *img)
+{
+	free(img->px);
+	free(img);
+}
