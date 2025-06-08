@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 #include "image.h"
 
 
@@ -68,13 +69,6 @@ GSI* gsi_create_by_pgm5(char* file_name)
 	int file_desc = open(file_name, O_BINARY | O_RDONLY);
 	if(file_desc < 0)
 		return NULL;
-		
-	// off_t file_pointer = lseek(file_desc, 0, SEEK_SET);
-	// if(file_pointer == -1)
-	// {
-	// 	close(file_desc);
-	// 	return NULL;
-	// }
 
 	unsigned char buf[256];
 	int idx = 0, width = 0, height = 0, max_value = 0;
@@ -172,80 +166,33 @@ char gsi_save_as_pgm5(GSI *img, char *file_name, char *comment)
 		return IMG_FAIL;
 
 	// Create new file to write data to
-	int file_desc = open(file_name, O_BINARY | O_CREAT | O_TRUNC, S_IWUSR);
+	int file_desc = open(file_name, O_BINARY | O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR);
+	// printf("file desc = %d\n", file_desc);
 	if(file_desc < 0)
 		return IMG_CREATE_FAIL;
 
-	// Write a comment after P5 "magic number"
-	if(comment)
-	{
 		size_t comment_length = strlen(comment);
 
-		if(
-			(write(file_desc, "P5\t", 3) != 3) ||
-			(write(file_desc, "# ", 2) != 2) ||
-			(write(file_desc, comment, comment_length) != comment_length) ||
-			(write(file_desc, "\n", 1) != 1)
-			)
+			// int w1 = write(file_desc, "P5\n", 3);
+			// perror("w1: ");
+			// printf("errno: %d\n", errno);
+			// int w2 = write(file_desc, "# ", 2);
+			// int w3 = write(file_desc, comment, comment_length);
+			// int w4 = write(file_desc, "\n", 1);
+			// printf("w1: %d w2: %d w3: %d w4: %d\n", w1, w2, w3, w4);
+
+		unsigned char buf[128] = {0};
+		snprintf(buf, sizeof(buf),"P5\n%s%s\n%u %u\n%u\n",
+						comment ? "#" : "",
+						comment ? comment : "",
+						img->width, img->height, img->mxvalue);
+		size_t header_len = strlen(buf);
+		if(write(file_desc, buf, header_len) != header_len)
 		{
 			close(file_desc);
-			return W_FAIL;
+			return -100;
 		}	
-	}
-	else
-	{
-		if(write(file_desc, "P5\n", 3) != 3)
-		{
-			close(file_desc);
-			return W_FAIL;
-		}
-	}
-
-	char buf1[128] = {0};
-	snprintf(buf1, 128, "%u", img->width);
-	size_t buf_length = strlen(buf1);
-	if(write(file_desc, buf1, buf_length) != buf_length)
-	{
-		close(file_desc);
-		return W_FAIL;
-	}
-
-	if(write(file_desc, " ", 1) != 1)
-	{
-		close(file_desc);
-		return W_FAIL;
-	}	
-
-	char buf[128] = {0};
-	snprintf(buf, 128, "%u", img->height);
-	buf_length = strlen(buf);
-	if(write(file_desc, buf, buf_length) != buf_length)
-	{
-		close(file_desc);
-		return W_FAIL;
-	}
-
-	if(write(file_desc, "\n", 1) != 1)
-	{
-		close(file_desc);
-		return W_FAIL;
-	}
-
-	char buf2[128] = {0};
-	snprintf(buf2, 128, "%u", img->mxvalue);
-	buf_length = strlen(buf2);
-	if(write(file_desc, buf2, buf_length) != buf_length)
-	{
-		close(file_desc);
-		return W_FAIL;
-	}
 	
-	if(write(file_desc, "\n", 1) != 1)
-	{
-		close(file_desc);
-		return W_FAIL;
-	}
-
 	int pixels_amount = img->width * img->height;
 	if(write(file_desc, img->px, pixels_amount) != pixels_amount)
 	{

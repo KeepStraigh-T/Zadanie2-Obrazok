@@ -12,6 +12,7 @@
 #define FN_FAIL	-3 					// File name
 #define W_FAIL -4							// Write
 
+
 typedef struct 
 {
 	unsigned int width;
