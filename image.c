@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string.h>
 #include "image.h"
 
 
@@ -120,11 +121,12 @@ GSI* gsi_create_by_pgm5(char* file_name)
 		else if(n == 1)
 			height = val;
 		else
+		{
 			max_value = val;
 
-		if(c == '#')
-			while(read(file_desc, &c, 1) == 1 && c != '\n');
-
+			if(c != '\n')
+				while(read(file_desc, &c, 1) == 1 && c != '\n');
+		}
 		n++;
 	}
 
@@ -133,7 +135,7 @@ GSI* gsi_create_by_pgm5(char* file_name)
 		close(file_desc);
 		perror("Pixel is not 1 byte size");
 		return NULL;
-	}	
+	}
 
 	GSI* image = gsi_create_with_geometry(width, height);
 	if(image == NULL)
@@ -141,6 +143,8 @@ GSI* gsi_create_by_pgm5(char* file_name)
 		close(file_desc);
 		return NULL;
 	}
+
+	image->mxvalue = max_value;
 
 	ssize_t expected = width * height;
 	ssize_t got = read(file_desc, image->px, expected);
@@ -154,4 +158,101 @@ GSI* gsi_create_by_pgm5(char* file_name)
 	}
 
 	return image;
+}
+
+char gsi_save_as_pgm5(GSI *img, char *file_name, char *comment)
+{
+	if(!img)
+		return IMG_FAIL;
+	else if(!(img->px))
+		return IMG_FAIL;
+	else if(!file_name)
+		return FN_FAIL;
+	else if(img->height <= 0 || img->width <= 0 || img->mxvalue <= 0)
+		return IMG_FAIL;
+
+	// Create new file to write data to
+	int file_desc = open(file_name, O_BINARY | O_CREAT | O_TRUNC, S_IWUSR);
+	if(file_desc < 0)
+		return IMG_CREATE_FAIL;
+
+	// Write a comment after P5 "magic number"
+	if(comment)
+	{
+		size_t comment_length = strlen(comment);
+
+		if(
+			(write(file_desc, "P5\t", 3) != 3) ||
+			(write(file_desc, "# ", 2) != 2) ||
+			(write(file_desc, comment, comment_length) != comment_length) ||
+			(write(file_desc, "\n", 1) != 1)
+			)
+		{
+			close(file_desc);
+			return W_FAIL;
+		}	
+	}
+	else
+	{
+		if(write(file_desc, "P5\n", 3) != 3)
+		{
+			close(file_desc);
+			return W_FAIL;
+		}
+	}
+
+	char buf1[128] = {0};
+	snprintf(buf1, 128, "%u", img->width);
+	size_t buf_length = strlen(buf1);
+	if(write(file_desc, buf1, buf_length) != buf_length)
+	{
+		close(file_desc);
+		return W_FAIL;
+	}
+
+	if(write(file_desc, " ", 1) != 1)
+	{
+		close(file_desc);
+		return W_FAIL;
+	}	
+
+	char buf[128] = {0};
+	snprintf(buf, 128, "%u", img->height);
+	buf_length = strlen(buf);
+	if(write(file_desc, buf, buf_length) != buf_length)
+	{
+		close(file_desc);
+		return W_FAIL;
+	}
+
+	if(write(file_desc, "\n", 1) != 1)
+	{
+		close(file_desc);
+		return W_FAIL;
+	}
+
+	char buf2[128] = {0};
+	snprintf(buf2, 128, "%u", img->mxvalue);
+	buf_length = strlen(buf2);
+	if(write(file_desc, buf2, buf_length) != buf_length)
+	{
+		close(file_desc);
+		return W_FAIL;
+	}
+	
+	if(write(file_desc, "\n", 1) != 1)
+	{
+		close(file_desc);
+		return W_FAIL;
+	}
+
+	int pixels_amount = img->width * img->height;
+	if(write(file_desc, img->px, pixels_amount) != pixels_amount)
+	{
+		close(file_desc);
+		return W_FAIL;
+	}
+
+	close(file_desc);
+	return SAVE_OK;
 }
