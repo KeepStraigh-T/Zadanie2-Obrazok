@@ -72,7 +72,7 @@ GSI* gsi_create_by_pgm5(char* file_name)
 
 	unsigned char buf[256];
 	int idx = 0, width = 0, height = 0, max_value = 0;
-
+	// Check for PGMB (P5) format
 	while(read(file_desc, &buf[idx], 1) == 1 && buf[idx] != '\n' && idx < 2)
 		idx++;
 	buf[idx] = '\0';
@@ -82,6 +82,7 @@ GSI* gsi_create_by_pgm5(char* file_name)
 		return NULL;
 	}
 
+	//Check for width, height and maxvalue
 	int n = 0;
 	while(n < 3)
 	{
@@ -90,6 +91,7 @@ GSI* gsi_create_by_pgm5(char* file_name)
 
 		// Skip whitespaces
 		while(read(file_desc, &c, 1) == 1 && (c == ' ' || c == '\n' || c == '\t' || c == '\r'));
+
 		if(c == '#')
 		{
 			while(read(file_desc, &c, 1) == 1 && c != '\n');
@@ -103,7 +105,7 @@ GSI* gsi_create_by_pgm5(char* file_name)
 
 		buf[idx] = '\0';
 
-		int val = atoi(buf);
+		int val = atoi((const char*)buf);
 		if(val <= 0)
 		{
 			close(file_desc);
@@ -146,8 +148,7 @@ GSI* gsi_create_by_pgm5(char* file_name)
 
 	if(got != expected)
 	{
-		free(image->px);
-		free(image);
+		gsi_destroy(image);
 		return NULL;
 	}
 
@@ -171,21 +172,21 @@ char gsi_save_as_pgm5(GSI *img, char *file_name, char *comment)
 	if(file_desc < 0)
 		return IMG_CREATE_FAIL;
 
-		size_t comment_length = strlen(comment);
+	// size_t comment_length = strlen(comment);
+	// int w1 = write(file_desc, "P5\n", 3);
+	// perror("w1: ");
+	// printf("errno: %d\n", errno);
+	// int w2 = write(file_desc, "# ", 2);
+	// int w3 = write(file_desc, comment, comment_length);
+	// int w4 = write(file_desc, "\n", 1);
+	// printf("w1: %d w2: %d w3: %d w4: %d\n", w1, w2, w3, w4);
 
-			// int w1 = write(file_desc, "P5\n", 3);
-			// perror("w1: ");
-			// printf("errno: %d\n", errno);
-			// int w2 = write(file_desc, "# ", 2);
-			// int w3 = write(file_desc, comment, comment_length);
-			// int w4 = write(file_desc, "\n", 1);
-			// printf("w1: %d w2: %d w3: %d w4: %d\n", w1, w2, w3, w4);
-
-		unsigned char buf[128] = {0};
+		char buf[128] = {0};
 		snprintf(buf, sizeof(buf),"P5\n%s%s\n%u %u\n%u\n",
-						comment ? "#" : "",
+						comment ? "# " : "",
 						comment ? comment : "",
 						img->width, img->height, img->mxvalue);
+
 		size_t header_len = strlen(buf);
 		if(write(file_desc, buf, header_len) != header_len)
 		{
