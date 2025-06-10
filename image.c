@@ -11,7 +11,6 @@
 GSI* gsi_create_empty(void)
 {
 	GSI* image = malloc(sizeof(GSI));
-
 	if(image == NULL)
 		return NULL;
 	
@@ -27,10 +26,9 @@ GSI* gsi_create_with_geometry(unsigned int m, unsigned int n)
 	GSI* image = gsi_create_empty();
 	if(image == NULL)
 		return NULL;
-
-		// Return zero-sized image
-	if(m == 0 || n == 0)
-		return image;
+	// Return zero-sized image
+	else if(m == 0 || n == 0)
+		return NULL;
 
 	image->width = m;
 	image->height = n;
@@ -47,13 +45,11 @@ GSI* gsi_create_with_geometry(unsigned int m, unsigned int n)
 GSI* gsi_create_with_geometry_and_color(unsigned int m, unsigned int n, unsigned char color)
 {
 	GSI* image = gsi_create_with_geometry(m, n);
-
 	if(image == NULL)
 		return NULL;
-
 	// Return zero-sized image
 	if(m == 0 || n == 0)
-		return image;
+		return NULL;
 
 	for(unsigned int i = 0; i < (m * n); i++)
 		image->px[i] = color;
