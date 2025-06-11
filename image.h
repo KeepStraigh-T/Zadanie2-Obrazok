@@ -7,7 +7,9 @@
 
 #define PIX(img, x, y) ((img)->px[(y) * (img)->width + (x)])
 #define SAVE_OK 1
+#define SAVE_FAIL -7
 #define OVERLAY_OK 2
+#define OVERLAY_FAIL -4
 #define IMG_FAIL -1
 #define IMG_CREATE_FAIL -2
 #define FN_FAIL	-3 					// File name

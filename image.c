@@ -68,6 +68,7 @@ GSI* gsi_create_by_pgm5(char* file_name)
 
 	unsigned char buf[256];
 	int idx = 0, width = 0, height = 0, max_value = 0;
+
 	// Check for PGMB (P5) format
 	while(read(file_desc, &buf[idx], 1) == 1 && buf[idx] != '\n' && idx < 2)
 		idx++;
@@ -96,7 +97,8 @@ GSI* gsi_create_by_pgm5(char* file_name)
 		// First non-whitespace or non-'#' character
 		buf[idx++] = c;
 		// Read next non-whitespace or non-'#' characters
-		while(read(file_desc, &c, 1) == 1 && c != ' ' && c != '\n' && c != '\t' && c != '\r' && c != '#')
+		while(read(file_desc, &c, 1) == 1 && c != ' ' && c != '\n'
+												&& c != '\t' && c != '\r' && c != '#')
 			buf[idx++] = c;
 
 		buf[idx] = '\0';
@@ -125,7 +127,7 @@ GSI* gsi_create_by_pgm5(char* file_name)
 	if(max_value > 255)
 	{
 		close(file_desc);
-		perror("Pixel is not 1 byte size");
+		printf("Pixel is not 1 byte size\n");
 		return NULL;
 	}
 
@@ -178,8 +180,8 @@ char gsi_save_as_pgm5(GSI *img, char *file_name, char *comment)
 	// printf("w1: %d w2: %d w3: %d w4: %d\n", w1, w2, w3, w4);
 
 		char buf[128] = {0};
-		snprintf(buf, sizeof(buf),"P5\n%s%s\n%u %u\n%u\n",
-						comment ? "# " : "",
+		snprintf(buf, sizeof(buf),"P5%s%s\n%u %u\n%u\n",
+						comment ? "\n# " : "",
 						comment ? comment : "",
 						img->width, img->height, img->mxvalue);
 
@@ -188,7 +190,7 @@ char gsi_save_as_pgm5(GSI *img, char *file_name, char *comment)
 		{
 			close(file_desc);
 			return -100;
-		}	
+		}
 	
 	int pixels_amount = img->width * img->height;
 	if(write(file_desc, img->px, pixels_amount) != pixels_amount)

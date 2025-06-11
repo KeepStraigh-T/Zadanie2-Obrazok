@@ -4,14 +4,14 @@
 
 char gsi_overlay(GSI *img, GSI *overlay, float opacity)
 {
-	if(!img || !overlay || img->height == 0 || img->width == 0 || 
+	if(!img || !overlay || img->height == 0 || img->width == 0 ||
 		 overlay->height != img->height || overlay->width != img->width)
 		return IMG_FAIL;
 	else if(img->mxvalue <= 0 || img->mxvalue > 255)
 		return IMG_FAIL;
 	else if(opacity < 0.0f || opacity > 1.0f)
 		return OPACITY_FAIL;
-	
+
 	unsigned char diff = 0;
 
 	for(unsigned int y = 0; y < img->height; y++)
@@ -44,9 +44,11 @@ int main(void)
 	if(!overlay)
 		return IMG_FAIL;
 	
-	char overlay_ret = gsi_overlay(image, overlay, 0.7);
-	printf("%d\n", overlay_ret);
+	char overlay_ret = gsi_overlay(image, overlay, 0.9);
+	if(overlay_ret != OVERLAY_OK)
+		return OVERLAY_FAIL;
 
-	char over = gsi_save_as_pgm5(image, "baboon4.pgm", "bbb");
-	printf("%d\n", over);
+	char over = gsi_save_as_pgm5(image, "baboon4.pgm", "Success");
+	if(over != SAVE_OK)
+		return SAVE_FAIL;
 }
